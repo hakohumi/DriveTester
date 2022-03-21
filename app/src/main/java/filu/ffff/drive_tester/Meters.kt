@@ -16,7 +16,7 @@ import kotlin.math.abs
 fun LimitedMeter(value: Double, modifier: Modifier = Modifier) {
     val dynamicRange = remember { mutableStateOf(0.0) }
 
-    var tempValue = value
+    val tempValue = value
 
     if (dynamicRange.value < abs(value)) {
         dynamicRange.value = abs(value)
@@ -42,6 +42,19 @@ fun LimitedMeter(value: Double, modifier: Modifier = Modifier) {
         modifier = modifier
             .graphicsLayer(
                 rotationZ = normalizedValue.toFloat()
+            )
+            .fillMaxSize()
+    )
+}
+
+@Composable
+fun NormalMeter(value: Double, modifier: Modifier = Modifier) {
+    Image(
+        painter = painterResource(id = R.drawable.needle1),
+        contentDescription = "needle",
+        modifier = modifier
+            .graphicsLayer(
+                rotationZ = value.toFloat()
             )
             .fillMaxSize()
     )

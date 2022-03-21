@@ -21,6 +21,7 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
@@ -58,6 +59,8 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
+
+
                     val accAngle = remember { mutableStateOf(0.0f) }
                     onGetAcc = {
                         accAngle.value = it
@@ -69,7 +72,6 @@ class MainActivity : ComponentActivity(), SensorEventListener {
 
                     val NS2S = 1.0f / 1000000000.0f
 
-                    val dynamicRange = 0.0
                     onGetGyro = { value, _timestamp ->
                         // y軸周りの回転速度
                         // rad/s
@@ -77,11 +79,11 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                         Log.d("timestamp", "$_timestamp")
 
                         if (timestamp != 0L) {
-                            val deltaTime = (_timestamp - timestamp ) * NS2S
-                            Log.d("deltaTime", "${(_timestamp - timestamp )}")
+                            val deltaTime = (_timestamp - timestamp) * NS2S
+                            Log.d("deltaTime", "${(_timestamp - timestamp)}")
                             Log.d("timestamp", "${timestamp}")
                             Log.d("NS2S", "$NS2S")
-                            val rad = (preRad + -value) * deltaTime  / 2
+                            val rad = (preRad + -value) * deltaTime / 2
                             Log.d("rad", "$rad")
 
                             val degree = (rad * (180.0 / PI))
@@ -95,6 +97,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
 
                     val padding = 16.dp
                     Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
                             .padding(padding)
                             .fillMaxHeight()
@@ -158,18 +161,6 @@ class MainActivity : ComponentActivity(), SensorEventListener {
     }
 }
 
-@Composable
-fun NormalMeter(value: Double, modifier: Modifier = Modifier) {
-    Image(
-        painter = painterResource(id = R.drawable.needle1),
-        contentDescription = "needle",
-        modifier = modifier
-            .graphicsLayer(
-                rotationZ = value.toFloat()
-            )
-            .fillMaxSize()
-    )
-}
 
 @Preview(showBackground = true)
 @Composable
