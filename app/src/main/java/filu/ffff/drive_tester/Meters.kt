@@ -37,7 +37,7 @@ fun LimitedMeter(value: Double, modifier: Modifier = Modifier) {
     Log.d("normalizedValue", "${(tempValue - leftMax) / (rightMax - leftMax)}")
 
     Image(
-        painter = painterResource(id = R.drawable.needle1),
+        painter = painterResource(id = R.drawable.needle),
         contentDescription = "needle",
         modifier = modifier
             .graphicsLayer(
@@ -50,7 +50,7 @@ fun LimitedMeter(value: Double, modifier: Modifier = Modifier) {
 @Composable
 fun NormalMeter(value: Double, modifier: Modifier = Modifier) {
     Image(
-        painter = painterResource(id = R.drawable.needle1),
+        painter = painterResource(id = R.drawable.needle),
         contentDescription = "needle",
         modifier = modifier
             .graphicsLayer(
