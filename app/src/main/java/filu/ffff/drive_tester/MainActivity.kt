@@ -9,7 +9,6 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,8 +22,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import filu.ffff.drive_tester.ui.theme.DriveTesterTheme
@@ -63,7 +60,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
 
                     val accAngle = remember { mutableStateOf(0.0f) }
                     onGetAcc = {
-                        accAngle.value = it
+                        accAngle.value = -it
                     }
 
 
