@@ -68,6 +68,8 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                     var preRad = 0.0f
 
                     val NS2S = 1.0f / 1000000000.0f
+
+                    val dynamicRange = 0.0
                     onGetGyro = { value, _timestamp ->
                         // y軸周りの回転速度
                         // rad/s
@@ -100,11 +102,10 @@ class MainActivity : ComponentActivity(), SensorEventListener {
 //                            .fillMaxSize()
                     ) {
                         Text(text = "Acc: ${accAngle.value}")
-                        Meter(accAngle.value.toDouble(), modifier = Modifier.weight(1f))
+                        LimitedMeter(accAngle.value.toDouble(), modifier = Modifier.weight(1f))
 
                         Text(text = "Gyro: ${gyroTotal.value}")
-                        Meter(gyroTotal.value, modifier = Modifier.weight(1f), Pair(-90.0, 90.0))
-
+                        LimitedMeter(gyroTotal.value, modifier = Modifier.weight(1f))
                         Button({
                             accAngle.value = 0.0f
                             gyroTotal.value = 0.0
@@ -158,14 +159,6 @@ class MainActivity : ComponentActivity(), SensorEventListener {
 }
 
 @Composable
-fun Meter(value: Double, modifier: Modifier = Modifier, limit: Pair<Double, Double>? = null) {
-    limit?.let {
-        LimitedMeter(value, modifier, limit)
-    } ?: NormalMeter(value, modifier)
-
-}
-
-@Composable
 fun NormalMeter(value: Double, modifier: Modifier = Modifier) {
     Image(
         painter = painterResource(id = R.drawable.needle1),
@@ -173,38 +166,6 @@ fun NormalMeter(value: Double, modifier: Modifier = Modifier) {
         modifier = modifier
             .graphicsLayer(
                 rotationZ = value.toFloat()
-            )
-            .fillMaxSize()
-    )
-}
-
-@Composable
-fun LimitedMeter(value: Double, modifier: Modifier = Modifier, limit: Pair<Double, Double>) {
-    var tempValue = value
-    val leftMax = limit.first
-    val rightMax = limit.second
-    // 入力されたvalueをleftMaxとrightMaxの間を-90 ~ 90に正規化したい。
-
-    if (tempValue < leftMax) {
-        tempValue = leftMax
-    } else if (tempValue > rightMax) {
-        tempValue = rightMax
-    }
-
-    Log.d("LimitedMeter: value", "$value")
-    Log.d("LimitedMeter: tempValue", "$tempValue")
-
-    val normalizedValue: Double =
-        (((tempValue - leftMax) / (rightMax - leftMax)) * (90 - (-90))) + (-90)
-
-    Log.d("normalizedValue", "${(tempValue - leftMax) / (rightMax - leftMax)}")
-
-    Image(
-        painter = painterResource(id = R.drawable.needle1),
-        contentDescription = "needle",
-        modifier = modifier
-            .graphicsLayer(
-                rotationZ = normalizedValue.toFloat()
             )
             .fillMaxSize()
     )
