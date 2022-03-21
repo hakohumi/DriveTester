@@ -27,6 +27,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import filu.ffff.drive_tester.ui.theme.DriveTesterTheme
+import kotlin.math.PI
 
 class MainActivity : ComponentActivity(), SensorEventListener {
     // 遅延する必要がある
@@ -35,7 +36,9 @@ class MainActivity : ComponentActivity(), SensorEventListener {
     private lateinit var accSensor: Sensor
     private lateinit var gyroSensor: Sensor
     var onGetAcc: (value: Float) -> Unit = {}
-    var onGetGyro: (value: Float) -> Unit = {}
+    var onGetGyro: (value: Float, timestamp: Long) -> Unit = { _, _ -> }
+
+    var timestamp = 0L
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,9 +64,31 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                     }
 
 
-                    val gyroTotal = remember { mutableStateOf(0.0f) }
-                    onGetGyro = {
-                        gyroTotal.value += -it
+                    val gyroTotal = remember { mutableStateOf(0.0) }
+                    var preRad = 0.0f
+
+                    val NS2S = 1.0f / 1000000000.0f
+                    onGetGyro = { value, _timestamp ->
+                        // y軸周りの回転速度
+                        // rad/s
+                        // 取得間隔で割る必要がある
+                        Log.d("timestamp", "$_timestamp")
+
+                        if (timestamp != 0L) {
+                            val deltaTime = (_timestamp - timestamp ) * NS2S
+                            Log.d("deltaTime", "${(_timestamp - timestamp )}")
+                            Log.d("timestamp", "${timestamp}")
+                            Log.d("NS2S", "$NS2S")
+                            val rad = (preRad + -value) * deltaTime  / 2
+                            Log.d("rad", "$rad")
+
+                            val degree = (rad * (180.0 / PI))
+                            Log.d("degree", "$degree")
+                            gyroTotal.value += degree
+
+                            preRad = -value
+                        }
+                        timestamp = _timestamp
                     }
 
                     val padding = 16.dp
@@ -75,17 +100,19 @@ class MainActivity : ComponentActivity(), SensorEventListener {
 //                            .fillMaxSize()
                     ) {
                         Text(text = "Acc: ${accAngle.value}")
-                        UpdateMeter(accAngle.value, modifier = Modifier.weight(1f))
+                        Meter(accAngle.value.toDouble(), modifier = Modifier.weight(1f))
+
                         Text(text = "Gyro: ${gyroTotal.value}")
-                        UpdateMeter(gyroTotal.value, modifier = Modifier.weight(1f))
+                        Meter(gyroTotal.value, modifier = Modifier.weight(1f), Pair(-90.0, 90.0))
+
                         Button({
                             accAngle.value = 0.0f
-                            gyroTotal.value = 0.0f
+                            gyroTotal.value = 0.0
                         }) {
                             Text(text = "Reset")
                         }
                     }
-                    Log.d("main", "created")
+//                    Log.d("main", "created")
                 }
             }
         }
@@ -93,8 +120,8 @@ class MainActivity : ComponentActivity(), SensorEventListener {
 
     override fun onResume() {
         super.onResume()
-        sensorManager.registerListener(this, accSensor, SensorManager.SENSOR_DELAY_FASTEST)
-        sensorManager.registerListener(this, gyroSensor, SensorManager.SENSOR_DELAY_FASTEST)
+        sensorManager.registerListener(this, accSensor, SensorManager.SENSOR_DELAY_UI)
+        sensorManager.registerListener(this, gyroSensor, SensorManager.SENSOR_DELAY_UI)
 
         Log.d("dddds", "onresume")
     }
@@ -109,7 +136,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
     override fun onSensorChanged(event: SensorEvent?) {
         event ?: return
 
-        Log.d("sensor", "${event.sensor.type}: ${event.values.map { it.toString() }}")
+//        Log.d("sensor", "${event.sensor.type}: ${event.values.map { it.toString() }}")
 
         when (event.sensor.type) {
             Sensor.TYPE_ACCELEROMETER -> {
@@ -117,8 +144,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                 onGetAcc(event.values[0])
             }
             Sensor.TYPE_GYROSCOPE -> {
-                // y軸周りの回転速度
-                onGetGyro(event.values[2])
+                onGetGyro(event.values[2], event.timestamp)
             }
             else -> {
                 // なにもしない
@@ -131,17 +157,55 @@ class MainActivity : ComponentActivity(), SensorEventListener {
     }
 }
 
+@Composable
+fun Meter(value: Double, modifier: Modifier = Modifier, limit: Pair<Double, Double>? = null) {
+    limit?.let {
+        LimitedMeter(value, modifier, limit)
+    } ?: NormalMeter(value, modifier)
+
+}
 
 @Composable
-fun UpdateMeter(angle: Float, modifier: Modifier = Modifier) {
+fun NormalMeter(value: Double, modifier: Modifier = Modifier) {
     Image(
         painter = painterResource(id = R.drawable.needle1),
         contentDescription = "needle",
         modifier = modifier
             .graphicsLayer(
-                rotationZ = angle
+                rotationZ = value.toFloat()
             )
-//            .fillMaxWidth()
+            .fillMaxSize()
+    )
+}
+
+@Composable
+fun LimitedMeter(value: Double, modifier: Modifier = Modifier, limit: Pair<Double, Double>) {
+    var tempValue = value
+    val leftMax = limit.first
+    val rightMax = limit.second
+    // 入力されたvalueをleftMaxとrightMaxの間を-90 ~ 90に正規化したい。
+
+    if (tempValue < leftMax) {
+        tempValue = leftMax
+    } else if (tempValue > rightMax) {
+        tempValue = rightMax
+    }
+
+    Log.d("LimitedMeter: value", "$value")
+    Log.d("LimitedMeter: tempValue", "$tempValue")
+
+    val normalizedValue: Double =
+        (((tempValue - leftMax) / (rightMax - leftMax)) * (90 - (-90))) + (-90)
+
+    Log.d("normalizedValue", "${(tempValue - leftMax) / (rightMax - leftMax)}")
+
+    Image(
+        painter = painterResource(id = R.drawable.needle1),
+        contentDescription = "needle",
+        modifier = modifier
+            .graphicsLayer(
+                rotationZ = normalizedValue.toFloat()
+            )
             .fillMaxSize()
     )
 }
